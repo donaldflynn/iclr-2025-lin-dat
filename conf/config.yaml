@@ -1,0 +1,24 @@
+defaults:
+  - dataset: cifar10
+  - model: logistic
+  - _self_
+
+# Experiment settings
+seed: 42
+experiment_name: "baseline"
+
+# Training settings
+training:
+  test_split: 0.2
+  validation_split: 0.1
+
+# Output settings
+save_model: true
+save_plots: true
+
+# Hydra settings for organized outputs
+hydra:
+  run:
+    dir: outputs/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: true

@@ -1,0 +1,10 @@
+name: "synthetic"
+n_samples: 10000
+n_features: 1000
+n_classes: 2
+variance: 1
+random_state: 42
+center_data: false # centered anyway
+
+alterations:
+  add_noise: 0.0

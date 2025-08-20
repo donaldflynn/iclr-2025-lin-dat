@@ -1,0 +1,9 @@
+name: "mnist"
+flatten: true
+normalize: true
+center_data: false
+
+alterations:
+  add_noise: 0.0
+  rotation_angle: 0.0
+  brightness_factor: 1.0

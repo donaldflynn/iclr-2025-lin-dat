@@ -1,0 +1,4 @@
+type: "linear_multiclass"
+center_data: true
+regularization: 0.01
+fit_intercept: false  # Since we center the data

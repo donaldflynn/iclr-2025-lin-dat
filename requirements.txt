@@ -1,0 +1,7 @@
+torch
+torchvision
+hydra-core
+scikit-learn
+numpy
+matplotlib
+seaborn
