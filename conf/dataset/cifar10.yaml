@@ -2,9 +2,3 @@ name: "cifar10"
 flatten: true
 normalize: true
 center_data: false
-
-# Data alterations for experiments
-alterations:
-  add_noise: 0.0
-  rotation_angle: 0.0
-  brightness_factor: 1.0

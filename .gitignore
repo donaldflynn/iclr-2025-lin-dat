@@ -1,2 +1,4 @@
 data/*
 outputs/*
+multirun/*
+src/__pycache__/*

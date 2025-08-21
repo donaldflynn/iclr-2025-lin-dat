@@ -7,6 +7,13 @@ defaults:
 seed: 42
 experiment_name: "baseline"
 
+# Poison settings
+poison:
+  proportion: 0.1
+  into_class: 0
+  num_pixels: 4
+  L2_size: 1
+
 # Training settings
 training:
   test_split: 0.2
