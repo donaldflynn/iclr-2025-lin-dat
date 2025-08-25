@@ -79,7 +79,7 @@ class DataLoader:
         np.random.seed(self.cfg.dataset.random_state)
         assert is_square(self.cfg.dataset.n_features_squared), "n_features_squared must be a square number"
 
-        X = np.random.normal(0.0, self.cfg.variance , (self.cfg.dataset.n_samples, self.cfg.dataset.n_features_squared))
+        X = np.random.normal(0.0, self.cfg.dataset.variance , (self.cfg.dataset.n_samples, self.cfg.dataset.n_features_squared))
         y = np.random.randint(0, self.cfg.dataset.n_classes, self.cfg.dataset.n_samples)
         
         X_train, X_test, y_train, y_test = train_test_split(
