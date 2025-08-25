@@ -50,9 +50,11 @@ class DataLoader:
         y_test = np.array([y for _, y in testset])
         
         # Apply preprocessing
-        X_train, y_train, X_test, y_test = self._preprocess(X_train, y_train, X_test, y_test)
+        X_train, y_train = self._preprocess(X_train, y_train, poison_mode='proportion')
+        X_test_pois, y_test_pois = self._preprocess(X_test, y_test, poison_mode='all')
+        X_test_clean, y_test_clean = self._preprocess(X_test, y_test, poison_mode='none')
         
-        return X_train, y_train, X_test, y_test
+        return X_train, y_train, X_test_pois, y_test_pois, X_test_clean, y_test_clean
     
     def _load_mnist(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Load MNIST dataset"""
@@ -70,10 +72,12 @@ class DataLoader:
         X_test = np.array([np.array(x) for x, _ in testset])
         y_test = np.array([y for _, y in testset])
         
-        X_train, y_train, X_test, y_test = self._preprocess(X_train, y_train, X_test, y_test)
+        X_train, y_train = self._preprocess(X_train, y_train, poison_mode='proportion')
+        X_test_pois, y_test_pois = self._preprocess(X_test, y_test, poison_mode='all')
+        X_test_clean, y_test_clean = self._preprocess(X_test, y_test, poison_mode='none')
         
-        return X_train, y_train, X_test, y_test
-    
+        return X_train, y_train, X_test_pois, y_test_pois, X_test_clean, y_test_clean
+
     def _load_synthetic(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Generate synthetic Gaussian dataset"""
         np.random.seed(self.cfg.dataset.random_state)
@@ -87,48 +91,54 @@ class DataLoader:
             random_state=self.cfg.seed
         )
         
-        X_train, y_train, X_test, y_test = self._preprocess(X_train, y_train, X_test, y_test)
+        X_train, y_train = self._preprocess(X_train, y_train, poison_mode='proportion')
+        X_test_pois, y_test_pois = self._preprocess(X_test, y_test, poison_mode='all')
+        X_test_clean, y_test_clean = self._preprocess(X_test, y_test, poison_mode='none')
         
-        return X_train, y_train, X_test, y_test
-    
-    def _preprocess(self, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        return X_train, y_train, X_test_pois, y_test_pois, X_test_clean, y_test_clean
+        
+    def _preprocess(self, X: np.ndarray, y: np.ndarray, poison_mode: str) -> Tuple[np.ndarray, np.ndarray]:
+        assert poison_mode in ['none', 'proportion', 'all'], f"Invalid poison_mode: {poison_mode}"
         """Apply preprocessing based on configuration"""
+        
+        # Make copies to avoid modifying original data
+        X = X.copy()
+        y = y.copy()
         
         # Flatten if needed
         if self.cfg.dataset.get('flatten', False):
-            X_train = X_train.reshape(X_train.shape[0], -1)
-            X_test = X_test.reshape(X_test.shape[0], -1)
+            X = X.reshape(X.shape[0], -1)
         
         # Normalize to [0, 1]
         if self.cfg.dataset.get('normalize', False):
-            X_train = X_train.astype(np.float32) / 255.0
-            X_test = X_test.astype(np.float32) / 255.0
+            X = X.astype(np.float32) / 255.0
         
         # Center data (make mean = 0)
         if self.cfg.dataset.get('center_data', False) or self.cfg.model.get('center_data', False):
-            mean = np.mean(X_train, axis=0)
-            X_train = X_train - mean
-            X_test = X_test - mean
+            mean = np.mean(X, axis=0)
+            X = X - mean
         
         # Apply data poison
-        X_train, y_train = self._apply_poison(X_train, y_train)
-        X_test, y_test = self._apply_poison(X_test, y_test)
+        X, y = self._apply_poison(X, y, poison_mode)
         
-        return X_train, y_train, X_test, y_test
-    
+        return X, y
+        
 
-    def _apply_poison(self, X: np.ndarray, y: np.ndarray):
+    def _apply_poison(self, X: np.ndarray, y: np.ndarray, poison_mode: str):
         """Apply data poison for experiments (vectorized, L2-normalized poison vector)"""
-        if not hasattr(self.cfg, 'poison'):
+        
+        if not hasattr(self.cfg, 'poison') or poison_mode == 'none':
             return X, y
         
         proportion = self.cfg.poison.get('proportion', 0)
-        if proportion <= 0:
-            return X, y
+        
+        if poison_mode=='proportion':
+            if proportion <= 0:
+                return X, y
         
 
         # Number of samples to poison
-        n_poison = int(len(X) * proportion)
+        n_poison = int(len(X) * proportion) if poison_mode=='proportion' else len(X)
 
         # Get feature shape and size
         feature_shape = X.shape[1:]

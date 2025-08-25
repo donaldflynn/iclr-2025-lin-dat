@@ -10,18 +10,28 @@ class ModelEvaluator:
     def __init__(self, save_plots: bool = True):
         self.save_plots = save_plots
         
-    def evaluate(self, model, X_test: np.ndarray, y_test: np.ndarray) -> Dict[str, Any]:
+    def evaluate(
+            self,
+            model,
+            X_test_pois: np.ndarray,
+            y_test_pois: np.ndarray, 
+            X_test_clean: np.ndarray, 
+            y_test_clean: np.ndarray
+        ) -> Dict[str, Any]:
+
         """Evaluate model and return metrics"""
-        y_pred = model.predict(X_test)
+        y_pred_pois = model.predict(X_test_pois)
+        y_pred_clean = model.predict(X_test_clean)
         
         results = {
-            'accuracy': accuracy_score(y_test, y_pred),
-            'classification_report': classification_report(y_test, y_pred),
-            'confusion_matrix': confusion_matrix(y_test, y_pred)
+            'poison_accuracy': accuracy_score(y_test_pois, y_pred_pois),
+            'clean_accuracy': accuracy_score(y_test_clean, y_pred_clean),
+            # 'classification_report': classification_report(y_test, y_pred),
+            # 'confusion_matrix': confusion_matrix(y_test, y_pred)
         }
         
-        if self.save_plots:
-            self._plot_confusion_matrix(results['confusion_matrix'], model.classes_)
+        # if self.save_plots:
+        #     self._plot_confusion_matrix(results['confusion_matrix'], model.classes_)
             
         return results
     

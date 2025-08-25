@@ -23,9 +23,9 @@ def train(cfg: DictConfig) -> None:
     
     # Load data
     data_loader = DataLoader(cfg)
-    X_train, y_train, X_test, y_test = data_loader.load_data()
+    X_train, y_train, X_test_pois, y_test_pois, X_test_clean, y_test_clean = data_loader.load_data()
     
-    log.info(f"Data loaded - Train: {X_train.shape}, Test: {X_test.shape}")
+    log.info(f"Data loaded - Train: {X_train.shape}, Test_clean: {X_test_clean.shape}, Test_pois: {X_test_pois.shape}")
     
     # Create and train model
     model = create_model(cfg)
@@ -36,9 +36,11 @@ def train(cfg: DictConfig) -> None:
     evaluator = ModelEvaluator(save_plots=cfg.save_plots)
     
     # Performance evaluation
-    results = evaluator.evaluate(model, X_test, y_test)
-    log.info(f"Test Accuracy: {results['accuracy']:.4f}")
-    
+    results = evaluator.evaluate(model, X_test_pois, y_test_pois, X_test_clean, y_test_clean)
+    log.info(f"Clean Accuracy: {results['clean_accuracy']:.4f}")
+    log.info(f"Poison Accuracy: {results['poison_accuracy']:.4f}")
+
+
     # Weight analysis
     weight_analysis = evaluator.analyze_weights(model)
     log.info(f"Weight Analysis: {weight_analysis}")
@@ -56,7 +58,8 @@ def train(cfg: DictConfig) -> None:
         'weight_analysis': weight_analysis,
         'data_shapes': {
             'train': X_train.shape,
-            'test': X_test.shape
+            'test_clean': X_test_clean.shape,
+            'test_poison': X_test_pois.shape
         }
     }
     
@@ -65,7 +68,7 @@ def train(cfg: DictConfig) -> None:
     
     log.info("Experiment completed!")
     
-    return results['accuracy']  # Return metric for hyperparameter optimization
+    # return results['accuracy']  # Return metric for hyperparameter optimization
 
 if __name__ == "__main__":
     train()
