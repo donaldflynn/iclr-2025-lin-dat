@@ -1,7 +1,5 @@
 torch
 torchvision
+numpy
 hydra-core
 scikit-learn
-numpy
-matplotlib
-seaborn

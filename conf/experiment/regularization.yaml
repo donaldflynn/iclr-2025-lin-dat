@@ -3,7 +3,7 @@ defaults:
   - override /dataset: mnist
   - override /model: linear_multiclass
 
-experiment_name: "mnist_linear_comprehensive_sweep"
+experiment_name: "regularization"
 
 
 # Poison settings
@@ -11,7 +11,7 @@ poison:
   proportion: 0.1
   into_class: 0
   num_pixels: 4
-  L2_size: 1
+  L2_size: 2
 
 dataset:
   name: "synthetic"
@@ -30,4 +30,4 @@ hydra:
     subdir: reg_${model.regularization}
   sweeper:
     params:
-        model.regularization: 1e-6,1e-5,1e-4,5e-4,1e-3,5e-3,1e-2,5e-2,1e-1,5e-1,1.0
+        model.regularization: ${logspace:-6,-1,100}  # 100 values from 1e-6 to 1e-1

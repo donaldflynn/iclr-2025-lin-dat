@@ -7,8 +7,9 @@ from typing import Dict, Any
 import os
 
 class ModelEvaluator:
-    def __init__(self, save_plots: bool = True):
+    def __init__(self, poison_pixels: int, save_plots: bool = True):
         self.save_plots = save_plots
+        self.poison_pixels = poison_pixels
         
     def evaluate(
             self,
@@ -22,20 +23,17 @@ class ModelEvaluator:
         """Evaluate model and return metrics"""
         y_pred_pois = model.predict(X_test_pois)
         y_pred_clean = model.predict(X_test_clean)
-        
+        analysis = self.analyze_weights(model, X_test_clean.shape[1])
+
         results = {
             'poison_accuracy': accuracy_score(y_test_pois, y_pred_pois),
             'clean_accuracy': accuracy_score(y_test_clean, y_pred_clean),
-            # 'classification_report': classification_report(y_test, y_pred),
-            # 'confusion_matrix': confusion_matrix(y_test, y_pred)
+            **analysis
         }
-        
-        # if self.save_plots:
-        #     self._plot_confusion_matrix(results['confusion_matrix'], model.classes_)
-            
+                    
         return results
     
-    def analyze_weights(self, model) -> Dict[str, Any]:
+    def analyze_weights(self, model, data_dim) -> Dict[str, Any]:
         """Analyze model weights"""
         if hasattr(model, 'get_weights'):
             weights_info = model.get_weights()
@@ -48,20 +46,23 @@ class ModelEvaluator:
             return {}
         
         analysis = {}
-        
+
+        data_dim
+        v = np.zeros(data_dim)
+        v[-self.poison_pixels:] = 1
+        pv = (v / np.linalg.norm(v)).reshape(-1)
+
         if 'coef' in weights_info:
             coef = weights_info['coef']
-            analysis.update({
-                'weight_norm': np.linalg.norm(coef),
-                'weight_sparsity': np.mean(np.abs(coef) < 1e-6),
-                'weight_std': np.std(coef),
-                'weight_mean': np.mean(coef),
-                'max_weight': np.max(np.abs(coef))
-            })
-            
-            if self.save_plots:
-                self._plot_weight_distribution(coef)
-                
+            if coef.shape[1] == data_dim:
+                for i in range(coef.shape[0]):
+                    analysis[f'class_{i}_poison_alignment'] = float(coef[i] @ pv)
+            # Some models expose (n_features, n_classes)
+            elif coef.shape[0] == data_dim:
+                for j in range(coef.shape[1]):
+                    analysis[f'class_{j}_poison_alignment'] = float(coef[:, j] @ pv)
+            else:
+                raise ValueError(f"Incompatible coef shape {coef.shape} for data_dim={data_dim}")
         return analysis
     
     def _plot_confusion_matrix(self, cm: np.ndarray, classes: np.ndarray):

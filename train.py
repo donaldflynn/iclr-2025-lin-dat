@@ -7,9 +7,18 @@ import logging
 from src.data import DataLoader
 from src.models import create_model
 from src.evaluation import ModelEvaluator
+from omegaconf import OmegaConf
+
 
 # Set up logging
 log = logging.getLogger(__name__)
+
+OmegaConf.register_new_resolver(
+    "logspace",
+    lambda start, stop, num: ",".join(
+        f"{x:.3}" for x in np.logspace(float(start), float(stop), int(num)).tolist()
+    ),
+)
 
 @hydra.main(config_path="conf", config_name="config", version_base=None)
 def train(cfg: DictConfig) -> None:
@@ -33,17 +42,13 @@ def train(cfg: DictConfig) -> None:
     model.fit(X_train, y_train)
     
     # Evaluate model
-    evaluator = ModelEvaluator(save_plots=cfg.save_plots)
+    evaluator = ModelEvaluator(save_plots=cfg.save_plots, poison_pixels=cfg.poison.num_pixels)
     
     # Performance evaluation
     results = evaluator.evaluate(model, X_test_pois, y_test_pois, X_test_clean, y_test_clean)
     log.info(f"Clean Accuracy: {results['clean_accuracy']:.4f}")
     log.info(f"Poison Accuracy: {results['poison_accuracy']:.4f}")
 
-
-    # Weight analysis
-    weight_analysis = evaluator.analyze_weights(model)
-    log.info(f"Weight Analysis: {weight_analysis}")
     
     # Save model and results
     if cfg.save_model:
@@ -55,7 +60,6 @@ def train(cfg: DictConfig) -> None:
     all_results = {
         'config': dict(cfg),
         'performance': results,
-        'weight_analysis': weight_analysis,
         'data_shapes': {
             'train': X_train.shape,
             'test_clean': X_test_clean.shape,
