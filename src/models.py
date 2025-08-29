@@ -24,7 +24,7 @@ class LinearMulticlass(BaseEstimator, ClassifierMixin):
         """Fit one binary linear regression per class"""
         self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
-        n_features = X.shape[1]
+        n_data, n_features = X.shape
         
         self.coef_ = np.zeros((n_classes, n_features))
         self.intercept_ = np.zeros(n_classes)
@@ -35,10 +35,10 @@ class LinearMulticlass(BaseEstimator, ClassifierMixin):
             
             # Solve linear regression: minimize ||Xw - y||^2 + λ||w||^2
             if self.regularization > 0:
-                # Ridge regression solution: w = (X'X + λI)^-1 X'y
-                XtX = X.T @ X
+                # Ridgae regression solution: w = (X'X + λI)^-1 X'y
+                XtX = 1/n_data * (X.T @ X)
                 regularization_matrix = self.regularization * np.eye(n_features)
-                w = np.linalg.solve(XtX + regularization_matrix, X.T @ y_binary)
+                w = np.linalg.solve((XtX) + regularization_matrix, 1/n_data * X.T @ y_binary)
             else:
                 # Ordinary least squares: w = (X'X)^-1 X'y
                 w = np.linalg.lstsq(X, y_binary, rcond=None)[0]

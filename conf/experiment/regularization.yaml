@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /dataset: mnist
+  - override /dataset: synthetic
   - override /model: linear_multiclass
 
 experiment_name: "regularization"
@@ -15,11 +15,11 @@ poison:
 
 dataset:
   name: "synthetic"
-  n_samples: 1000
+  n_samples: 2048
   n_features_squared: 1024
   n_classes: 2
   variance: 1
-  random_state: 42
+  random_state: 40
   center_data: false
 
 
@@ -30,4 +30,4 @@ hydra:
     subdir: reg_${model.regularization}
   sweeper:
     params:
-        model.regularization: ${logspace:-6,-1,100}  # 100 values from 1e-6 to 1e-1
+        model.regularization: ${logspace:-6, 4,100}  # 100 values from 1e-6 to 1e-1

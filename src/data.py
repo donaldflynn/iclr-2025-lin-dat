@@ -148,7 +148,7 @@ class DataLoader:
         pois_flat = np.zeros(feature_size, dtype=np.float32)
         pois_flat[-self.cfg.poison['num_pixels']:] = 1.0
 
-        # Normalize to L2 norm = 5
+        # Normalize to L2 norm
         norm = np.linalg.norm(pois_flat, ord=2)
         if norm > 0:
             pois_flat = pois_flat * (self.cfg.poison['L2_size']/ norm)
@@ -170,4 +170,4 @@ class DataLoader:
         X_poisoned[mask] += pois
         y_poisoned[mask] = self.cfg.poison['into_class']
     
-        return X_poisoned, y
+        return X_poisoned, y_poisoned
